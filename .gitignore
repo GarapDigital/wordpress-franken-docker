@@ -1,1 +1,5 @@
 .env
+
+# Ignore Docker secret files mounted at /run/secrets (do NOT commit secrets)
+# Example: production secrets mounted into containers at /run/secrets/<NAME>
+/run/secrets

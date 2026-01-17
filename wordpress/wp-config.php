@@ -23,16 +23,38 @@ define("WP_CACHE", true); // Added by W3 Total Cache
 
 // ** Database settings - You can get this info from your web host ** //
 /** The name of the database for WordPress */
-define("DB_NAME", getenv("DB_NAME"));
+// Helper: prefer environment variable, then Docker secret file (/run/secrets/<name>), then default
+function secret_or_env($env_name, $secret_name, $default = null)
+{
+    $v = getenv($env_name);
+    if ($v !== false && $v !== "") {
+        return $v;
+    }
+    $path = "/run/secrets/" . $secret_name;
+    if (is_readable($path)) {
+        $content = trim(@file_get_contents($path));
+        if ($content !== "") {
+            return $content;
+        }
+    }
+    return $default;
+}
+
+$db_name = secret_or_env("DB_NAME", "DB_NAME", "wordpress");
+$db_user = secret_or_env("DB_USER", "DB_USER", "wordpress");
+$db_password = secret_or_env("DB_PASSWORD", "DB_PASSWORD", "");
+$db_host = secret_or_env("DB_HOST", "DB_HOST", "db");
+
+define("DB_NAME", $db_name);
 
 /** Database username */
-define("DB_USER", getenv("DB_USER"));
+define("DB_USER", $db_user);
 
 /** Database password */
-define("DB_PASSWORD", getenv("DB_PASSWORD"));
+define("DB_PASSWORD", $db_password);
 
 /** Database hostname */
-define("DB_HOST", getenv("DB_HOST"));
+define("DB_HOST", $db_host);
 
 /** Database charset to use in creating database tables. */
 define("DB_CHARSET", "utf8mb4");
@@ -62,11 +84,12 @@ $salt_keys = [
 ];
 
 foreach ($salt_keys as $salt_key) {
-    $salt_val = getenv($salt_key);
+    // Prefer env var, then Docker secret at /run/secrets/<KEY>, otherwise generate a runtime salt (dev fallback).
+    $salt_val = secret_or_env($salt_key, $salt_key, "");
     if ($salt_val && $salt_val !== "put your unique phrase here") {
         define($salt_key, $salt_val);
     } else {
-        // Generate a secure random salt for non-production environments or if env is missing.
+        // Generate a secure random salt for non-production environments or if env/secret is missing.
         // Use random_bytes() when available; fallback to openssl_random_pseudo_bytes().
         try {
             $rand = bin2hex(random_bytes(32));
