@@ -1,0 +1,68 @@
+services:
+  app:
+    build: .
+    image: wordpress-frankenphp:php8.2
+    container_name: ${APP_NAME}_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./wordpress:/app/public
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      WP_HOME: ${WP_HOME}
+      WP_SITEURL: ${WP_SITEURL}
+    depends_on:
+      - db
+      - redis
+    networks:
+      - wpnet
+
+  db:
+    image: mariadb:11
+    container_name: ${APP_NAME}_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - wpnet
+
+  redis:
+    image: redis:7-alpine
+    container_name: ${APP_NAME}_redis
+    restart: unless-stopped
+    networks:
+      - wpnet
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: ${APP_NAME}_pma
+    restart: unless-stopped
+    ports:
+      - "${PHPMYADMIN_PORT}:80"
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    depends_on:
+      - db
+    networks:
+      - wpnet
+
+volumes:
+  db_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  wpnet:
+    driver: bridge

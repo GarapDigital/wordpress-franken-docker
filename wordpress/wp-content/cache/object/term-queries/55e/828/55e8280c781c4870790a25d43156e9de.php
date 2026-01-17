@@ -1,0 +1,1 @@
+‡²ji<?php exit; ?>a:2:{s:7:"content";a:2:{s:4:"data";a:1:{i:0;O:8:"stdClass":2:{s:7:"term_id";i:1;s:9:"object_id";i:1;}}s:4:"salt";s:21:"0.67908000 1768600019";}s:15:"key_version_all";i:1;}

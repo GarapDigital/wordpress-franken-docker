@@ -1,0 +1,1 @@
+â¿ji<?php exit; ?>a:2:{s:7:"content";a:3:{i:0;s:57:"/app/public/wp-content/languages/plugins/akismet-id_ID.mo";i:1;s:61:"/app/public/wp-content/languages/plugins/hello-dolly-id_ID.mo";i:2;s:63:"/app/public/wp-content/languages/plugins/akismet-id_ID.l10n.php";}s:15:"key_version_all";i:1;}
