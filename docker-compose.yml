@@ -50,6 +50,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - redis_data:/data
     networks:
       - wpnet
 
@@ -73,6 +75,7 @@ services:
 
 volumes:
   db_data:
+  redis_data:
   caddy_data:
   caddy_config:
 

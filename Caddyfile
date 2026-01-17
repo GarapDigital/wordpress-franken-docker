@@ -1,29 +1,40 @@
-{$DOMAIN} {
-    root * /app/public
-    php_server
-    file_server
+{$DOMAIN}, www.{$DOMAIN} {
+ root * /app/public
 
-    encode gzip zstd
+ # Layani file statis dulu
+ file_server
 
-    # Security headers
-    header {
-        X-Content-Type-Options "nosniff"
-        X-Frame-Options "SAMEORIGIN"
-        Referrer-Policy "no-referrer-when-downgrade"
-        X-XSS-Protection "1; mode=block"
-        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
-        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-    }
+ # PHP/FrankenPHP handler
+ php_server
 
-    # Block access to sensitive files
-    @sensitive path_regexp sensitive ^/(?:\.env|wp-config\.php|wp-config-sample\.php|readme\.html|license\.txt)$
-    respond @sensitive 404
+ encode gzip zstd
 
-    # Deny direct access to PHP files in uploads (prevents code execution in uploads)
-    @uploads_php path_regexp uploads_php ^/wp-content/uploads/.*\.php$
-    respond @uploads_php 404
+ # Security headers
+ header {
+ X-Content-Type-Options "nosniff"
+ X-Frame-Options "SAMEORIGIN"
+ Referrer-Policy "no-referrer-when-downgrade"
+ X-XSS-Protection "1; mode=block"
+ # Sesuaikan CSP kalau ada font/CDN eksternal
+ Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+ Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+ }
 
-    # Optional: restrict xmlrpc if not used
-    @xmlrpc path /xmlrpc.php
-    respond @xmlrpc 403
+ # Block akses ke file sensitif
+ @sensitive {
+ path /.env
+ path /wp-config.php
+ path /wp-config-sample.php
+ path /readme.html
+ path /license.txt
+ }
+ respond @sensitive 404
+
+ # Deny direct access ke PHP di uploads
+ @uploads_php path_regexp uploads_php ^/wp-content/uploads/.*\.php$
+ respond @uploads_php 404
+
+ # Optional: blokir xmlrpc kalau tidak dipakai
+ @xmlrpc path /xmlrpc.php
+ respond @xmlrpc 403
 }
