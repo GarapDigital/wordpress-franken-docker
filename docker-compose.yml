@@ -24,7 +24,7 @@ services:
       - wpnet
 
   db:
-    image: mariadb:11
+    image: mariadb:11.0
     container_name: ${APP_NAME}_db
     restart: unless-stopped
     environment:
@@ -34,18 +34,28 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - wpnet
 
   redis:
-    image: redis:7-alpine
+    image: redis:7.0-alpine
     container_name: ${APP_NAME}_redis
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - wpnet
 
   phpmyadmin:
-    image: phpmyadmin:latest
+    image: phpmyadmin:5.2.0
     container_name: ${APP_NAME}_pma
     restart: unless-stopped
     ports:

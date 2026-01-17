@@ -43,22 +43,39 @@ define("DB_COLLATE", "");
 /**#@+
  * Authentication unique keys and salts.
  *
- * Change these to different unique phrases! You can generate these using
- * the {@link https://api.wordpress.org/secret-key/1.1/salt/ WordPress.org secret-key service}.
+ * These values should be provided via environment variables in production.
+ * If not provided (for local/dev), generate cryptographically secure salts at runtime.
  *
- * You can change these at any point in time to invalidate all existing cookies.
- * This will force all users to have to log in again.
+ * You can generate production salts at https://api.wordpress.org/secret-key/1.1/salt/
  *
  * @since 2.6.0
  */
-define("AUTH_KEY", "put your unique phrase here");
-define("SECURE_AUTH_KEY", "put your unique phrase here");
-define("LOGGED_IN_KEY", "put your unique phrase here");
-define("NONCE_KEY", "put your unique phrase here");
-define("AUTH_SALT", "put your unique phrase here");
-define("SECURE_AUTH_SALT", "put your unique phrase here");
-define("LOGGED_IN_SALT", "put your unique phrase here");
-define("NONCE_SALT", "put your unique phrase here");
+$salt_keys = [
+    "AUTH_KEY",
+    "SECURE_AUTH_KEY",
+    "LOGGED_IN_KEY",
+    "NONCE_KEY",
+    "AUTH_SALT",
+    "SECURE_AUTH_SALT",
+    "LOGGED_IN_SALT",
+    "NONCE_SALT",
+];
+
+foreach ($salt_keys as $salt_key) {
+    $salt_val = getenv($salt_key);
+    if ($salt_val && $salt_val !== "put your unique phrase here") {
+        define($salt_key, $salt_val);
+    } else {
+        // Generate a secure random salt for non-production environments or if env is missing.
+        // Use random_bytes() when available; fallback to openssl_random_pseudo_bytes().
+        try {
+            $rand = bin2hex(random_bytes(32));
+        } catch (Exception $e) {
+            $rand = bin2hex(openssl_random_pseudo_bytes(32));
+        }
+        define($salt_key, $rand);
+    }
+}
 
 /**#@-*/
 
@@ -88,7 +105,28 @@ $table_prefix = "wp_";
  *
  * @link https://developer.wordpress.org/advanced-administration/debug/debug-wordpress/
  */
-define("WP_DEBUG", false);
+/*
+ * Control debugging via APP_ENV environment variable.
+ * - If APP_ENV=development -> enable debug display and logs
+ * - Otherwise -> disable display but keep logging enabled
+ */
+$app_env = strtolower((string) getenv("APP_ENV"));
+
+if ($app_env === "development" || $app_env === "dev") {
+    define("WP_DEBUG", true);
+    define("WP_DEBUG_LOG", true);
+    define("WP_DEBUG_DISPLAY", true);
+} else {
+    define("WP_DEBUG", false);
+    define("WP_DEBUG_LOG", true);
+    define("WP_DEBUG_DISPLAY", false);
+}
+
+/**
+ * Prevent administrators from editing plugin and theme files from the dashboard.
+ * This helps reduce risk if an admin account is compromised.
+ */
+define("DISALLOW_FILE_EDIT", true);
 
 /* Add any custom values between this line and the "stop editing" line. */
 
